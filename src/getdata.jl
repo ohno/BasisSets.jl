@@ -68,16 +68,24 @@ dat = [
 
 global PATH = "data/"
 
-function getmenu(family)
+function getmetadata(basis)
+    PATH = "data/"
+    rd = JSON3.read(PATH * "METADATA.json")
+    bsmd = rd[basis]
 
-    csvfile = PATH * family * "-menu.csv"
-    df = CSV.read(csvfile, DataFrame)
-
-    return df 
+    return bsmd
 end
 
 function getbasisfamilyavailable()
     return dat
+end
+
+function getmenu(family)
+    PATH = "data/"
+    csvfile = PATH * family * "-menu.csv"
+    df = CSV.read(csvfile, DataFrame)
+
+    return df 
 end
 
 function getbasisfromfamily(family)
@@ -86,14 +94,6 @@ function getbasisfromfamily(family)
     basis = metadata[!, 1]
 
     return basis
-end
-
-function getmetadata(basis)
-
-    rd = JSON3.read(PATH * "METADATA.json")
-    bsmd = rd[basis]
-
-    return bsmd
 end
 
 function _getversions(basis)
