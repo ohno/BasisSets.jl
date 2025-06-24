@@ -1,20 +1,30 @@
 module BasisSets
-    using HTTP
-    using JSON3
-    using LinearAlgebra
-    using StaticArrays
+    using 
+        HTTP, 
+        JSON3, 
+        LinearAlgebra, 
+        StaticArrays
 
     include("periodictable.jl")
     include("molecule.jl")
     include("parser.jl")
     include("getdata.jl")
 
-    export Atom
-    export getatom
-    export Molecule
-    export molecule
-    export getatoms
-    export doublefactorial
-    export normalization
-    export parsebasis
+    export 
+        Atom, 
+        getatom,
+        Molecule,
+        molecule,
+        getatoms,
+        doublefactorial,
+        normalization,
+        parsebasis
+
+    const _METADATA = let 
+        path = joinpath(@__DIR__, "data", "METADATA.json")  # __DIR__ == src/
+        JSON3.read(path)
+    end
+
+    metadata() = _METADATA
+
 end
