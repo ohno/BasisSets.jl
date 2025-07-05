@@ -18,7 +18,9 @@ module BasisSets
         getatoms,
         doublefactorial,
         normalization,
-        parsebasis
+        parsebasis,
+        parsebasis_fromfile,
+        metadata
 
     const _METADATA = let 
         path = joinpath(@__DIR__, "data", "METADATA.json")  # __DIR__ == src/
