@@ -83,6 +83,27 @@ function _getbasis(atoms, basis)
     return data
 end
 
+function _getbasis_fromfile(atoms, basis)
+    atomicnumbers = [atom.number for atom in atoms]
+    elements = join(atomicnumbers, ",")
+
+    met = metaadata()
+    imp = met[basis]["versions"]["1"]["file_relpath"]
+    imp2 = JSON3.read("src/data/" * imp)
+
+    data = []
+
+    for atom in atoms
+        imp3 = JSON3.read("src/data/" * imp2["elements"]["$(atom.number)"])  
+        imp4 = imp3["elements"]["$(atom.number)"]["components"]
+        imp5 = JSON3.read("src/data/" * imp4[1])
+        push!(data, imp5)
+    end
+
+    return data
+end
+
+
 function doublefactorial(number)
     fact = foldl(Base.:*, range(number, 1, step=-2))
 
