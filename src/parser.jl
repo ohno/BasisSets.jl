@@ -87,7 +87,7 @@ function _getbasis_fromfile(atoms, basis)
     atomicnumbers = [atom.number for atom in atoms]
     elements = join(atomicnumbers, ",")
 
-    met = metaadata()
+    met = metadata()
     imp = met[basis]["versions"]["1"]["file_relpath"]
     imp2 = JSON3.read("src/data/" * imp)
 
@@ -97,7 +97,7 @@ function _getbasis_fromfile(atoms, basis)
         imp3 = JSON3.read("src/data/" * imp2["elements"]["$(atom.number)"])  
         imp4 = imp3["elements"]["$(atom.number)"]["components"]
         imp5 = JSON3.read("src/data/" * imp4[1])
-        push!(data, imp5)
+        push!(data, imp5["elements"]["$(atom.number)"])
     end
 
     return data
@@ -171,6 +171,41 @@ function parsebasis(molecule, basisset)
 
     for atom in atoms
         for shell in data["elements"]["$(atom.number)"]["electron_shells"]
+            for (index, ℓ) in enumerate(shell["angular_momentum"])
+                for momentum in _angularmomentum(ℓ)
+                    α = hcat(parse.(Float64, shell["exponents"])...)
+                    d = hcat(parse.(Float64, shell["coefficients"][index])...)
+                    ℓ = momentum[1]
+                    m = momentum[2]
+                    n = momentum[3]
+                    push!(basis,
+                    GaussianBasisSet(
+                            atom.coords,
+                            α,
+                            d,
+                            normalization.(α, ℓ, m, n),
+                            length(α),
+                            ℓ,
+                            m,
+                            n
+                        )
+                    )
+                end
+            end
+        end
+    end
+
+    return basis
+end
+
+function parsebasis_fromfile(molecule, basisset)
+    atoms = getatoms(molecule)
+    data = _getbasis_fromfile(atoms, basisset)
+
+    basis = GaussianBasisSet[]
+
+    for (i, atom) in enumerate(atoms)
+        for shell in data[i]["electron_shells"]
             for (index, ℓ) in enumerate(shell["angular_momentum"])
                 for momentum in _angularmomentum(ℓ)
                     α = hcat(parse.(Float64, shell["exponents"])...)
