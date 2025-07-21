@@ -67,6 +67,27 @@ function optimise_basis(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
     return β, γ, ζ, coeffs, rms
 end
 
+function optimise_basis_v2(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
+    obj(p) = begin
+        β, γ, ζ = p
+        alphas  = [β * γ^(i - 1) for i = 1:k]
+        _, rms  = inner_fit(alphas, ζ; n = n, l = l)
+        rms
+    end
+
+    p0    = [β0, γ0, ζ0]
+    lower = [1e-4, 1.01, 0.1]    # β>0, γ>1, ζ>0
+    upper = [1e2,  10.0, 5.0]
+
+    opts  = Optim.Options(x_abstol = 1e-10, f_abstol = 1e-12)
+    res   = optimize(obj, lower, upper, p0, Fminbox(NelderMead()), opts)
+
+    β, γ, ζ   = Optim.minimizer(res)
+    alphas    = [β * γ^(i - 1) for i = 1:k]
+    coeffs, rms = inner_fit(alphas, ζ; n = n, l = l)
+    return β, γ, ζ, alphas, coeffs, rms
+end
+
 # ---------- helper: print in Gaussian94 block format ------------------------
 function print_gaussian94(io, element, n, l, β, γ, coeffs)
     lchar = "spdfgh"[l + 1]           # 0→s, 1→p …
@@ -83,12 +104,81 @@ elements = ["H", "C"]
 
 #  shell_table[element] = list of (n, l, k)
 shell_table = Dict(
-    "H" => [(1, 0, 6),(2, 0, 6)],                          # 1s STO‑3G
+    "H" => [(1, 0, 6)],                          # 1s STO‑3G
     "C" => [(1, 0, 3),                           # 1s
             (2, 0, 3),                           # 2s
             (2, 1, 3),                           # 2p (shares β,γ with 2s)
             (0, 2, 1)]                           # 3d polarisation
 )
+
+
+β, γ, ζ, alphas, coeffs, rms = optimise_basis_v2(6, 1, 0)
+print(coeffs)
+println(alphas)
+println("β = $β, γ = $γ, ζ = $ζ\n")
+
+function optimizebasis(molecule, settings)
+    atoms = getatoms(molecule)
+
+    basis = GaussianBasisSet[]
+    
+    for atom in atoms
+        for setting in settings
+            for (idx, (n, l, k)) in enumerate(setting[atom.symbol])
+                β, γ, ζ, alphas, coeffs, rms = optimise_basis_v2(k, n, l)
+                for momentum in _angularmomentum(l)
+                    ℓ = momentum[1]
+                    m = momentum[2]
+                    n = momentum[3]
+                    push!(basis,
+                        GaussianBasisSet(
+                            atom.coords,
+                            alphas,
+                            coeffs,
+                            normalization.(alphas, ℓ, m, n),
+                            length(alphas),
+                            ℓ,
+                            m,
+                            n
+                        )
+                    )
+                end
+            end
+        end
+    end
+
+    return basis
+end
+
+function optimizebasis(molecule, settings)
+    atoms = getatoms(molecule)
+    basis = GaussianBasisSet[]
+    for atom in atoms
+        for setting in settings
+            for (idx, (n, l, k)) in enumerate(setting[atom.symbol])
+                β, γ, ζ, alphas, coeffs, rms = optimise_basis_v2(k, n, l)
+                for momentum in _angularmomentum(l)
+                    ℓ = momentum[1]
+                    m = momentum[2]
+                    n = momentum[3]
+                    push!(basis,
+                        GaussianBasisSet(
+                            atom.coords,
+                            alphas,
+                            coeffs,
+                            normalization.(alphas, ℓ, m, n),
+                            length(alphas),
+                            ℓ,
+                            m,
+                            n
+                        )
+                    )
+                end
+            end
+        end
+    end
+    return basis
+end
 
 open("my-basis.gbs", "w") do io
     for el in elements

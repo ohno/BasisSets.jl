@@ -3,12 +3,16 @@ module BasisSets
         HTTP, 
         JSON3, 
         LinearAlgebra, 
-        StaticArrays
+        StaticArrays,
+        Optim,
+        QuadGK,
+        ForwardDiff
 
     include("periodictable.jl")
     include("molecule.jl")
     include("parser.jl")
     include("getdata.jl")
+    include("optimizebasis.jl")
 
     export 
         Atom, 
@@ -20,7 +24,8 @@ module BasisSets
         normalization,
         parsebasis,
         parsebasis_fromfile,
-        metadata
+        metadata,
+        optimise_basis
 
     const _METADATA = let 
         path = joinpath(@__DIR__, "data", "METADATA.json")  # __DIR__ == src/
