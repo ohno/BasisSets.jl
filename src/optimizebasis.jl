@@ -85,7 +85,7 @@ function optimizebasis(molecule, bssettings)
     
     for atom in atoms
         println("Optimizing basis for atom: ", atom.symbol)
-        for (n, l, k) in bssettings[$atom.symbol]
+        for (n, l, k) in bssettings[atom.symbol]
             println("Optimizing for n=$n, l=$l, k=$k")
             β, γ, ζ, alphas, coeffs, rms = optimise_basis_v2(k, n, l)
             print(coeffs)
