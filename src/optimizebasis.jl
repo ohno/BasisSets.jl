@@ -47,6 +47,35 @@ function optimise_basis(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
     return β, γ, ζ, coeffs, rms
 end
 
+function optimise_basis_AD(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
+    # objective — same as before
+    obj(p) = begin
+        β, γ, ζ = p
+        αs      = [β * γ^(i - 1) for i = 1:k]
+        _, rms  = inner_fit(αs, ζ; n = n, l = l)
+        rms
+    end
+
+    # ---- initial point and bounds -----------------------------------------
+    p0    = [β0, γ0, ζ0]
+    lower = [1e-4, 1.01, 0.1]      # β>0, γ>1, ζ>0
+    upper = [1e2,  10.0, 5.0]
+
+    # ---- optimiser with box wrapper ---------------------------------------
+    algo  = Fminbox(LBFGS())
+
+    opts  = Optim.Options(x_abstol=1e-12, f_abstol=1e-14)
+
+    # autodiff=:forward lets Optim/JuMP generate ∇f via ForwardDiff
+    res = optimize(obj, lower, upper, p0, algo, opts;
+                   autodiff = :forward)
+
+    β, γ, ζ = Optim.minimizer(res)
+    αs      = [β * γ^(i - 1) for i = 1:k]
+    coeffs, rms = inner_fit(αs, ζ; n = n, l = l)
+    return β, γ, ζ, αs, coeffs, rms
+end
+
 function optimise_basis_v2(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
     obj(p) = begin
         β, γ, ζ = p
@@ -117,3 +146,41 @@ function optimizebasis(molecule, bssettings)
     return basis
 end
 
+function optimizebasis_ad(molecule, bssettings)
+    atoms = getatoms(molecule)
+
+    basis = GaussianBasisSet[]
+    
+    for atom in atoms
+        println("Optimizing basis for atom: ", atom.symbol)
+        for (ν, l, k) in bssettings[atom.symbol]
+            println("Optimizing for n=$ν, l=$l, k=$k")
+            β, γ, ζ, alphas, coeffs, rms = optimise_basis_AD(k, ν, l)
+            coeffs = permutedims(vcat(coeffs))
+            alphas = permutedims(vcat(alphas))
+            print(alphas)
+            for momentum in _angularmomentum(l)
+                ℓ = momentum[1]
+                println(" ℓ = $ℓ")
+                m = momentum[2]
+                println(" m = $m")
+                n = momentum[3]
+                println(" n = $n")
+                push!(basis,
+                    GaussianBasisSet(
+                        atom.coords,
+                        alphas,
+                        coeffs,
+                        normalization.(alphas, ℓ, m, n),
+                        length(alphas),
+                        ℓ,
+                        m,
+                        n
+                    )
+                )
+            end
+        end
+    end
+
+    return basis
+end
