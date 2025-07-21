@@ -78,35 +78,33 @@ function print_gaussian94(io, element, n, l, β, γ, coeffs)
     end
 end
 
-function optimizebasis(molecule, settings)
+function optimizebasis(molecule, bssettings)
     atoms = getatoms(molecule)
 
     basis = GaussianBasisSet[]
     
     for atom in atoms
-        for setting in settings
-            println("Optimizing basis for atom: ", atom.symbol)
-            for (n, l, k) in setting[atom.symbol]
-                println("Optimizing for n=$n, l=$l, k=$k")
-                β, γ, ζ, alphas, coeffs, rms = optimise_basis_v2(k, n, l)
-                print(coeffs)
-                for momentum in _angularmomentum(l)
-                    ℓ = momentum[1]
-                    m = momentum[2]
-                    n = momentum[3]
-                    push!(basis,
-                        GaussianBasisSet(
-                            atom.coords,
-                            alphas,
-                            coeffs,
-                            normalization.(alphas, ℓ, m, n),
-                            length(alphas),
-                            ℓ,
-                            m,
-                            n
-                        )
+        println("Optimizing basis for atom: ", atom.symbol)
+        for (n, l, k) in bssettings[$atom.symbol]
+            println("Optimizing for n=$n, l=$l, k=$k")
+            β, γ, ζ, alphas, coeffs, rms = optimise_basis_v2(k, n, l)
+            print(coeffs)
+            for momentum in _angularmomentum(l)
+                ℓ = momentum[1]
+                m = momentum[2]
+                n = momentum[3]
+                push!(basis,
+                    GaussianBasisSet(
+                        atom.coords,
+                        alphas,
+                        coeffs,
+                        normalization.(alphas, ℓ, m, n),
+                        length(alphas),
+                        ℓ,
+                        m,
+                        n
                     )
-                end
+                )
             end
         end
     end
