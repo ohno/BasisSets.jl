@@ -87,7 +87,9 @@ function optimizebasis(molecule, settings)
         for setting in settings
             println("Optimizing basis for atom: ", atom.symbol)
             for (n, l, k) in setting[atom.symbol]
+                println("Optimizing for n=$n, l=$l, k=$k")
                 β, γ, ζ, alphas, coeffs, rms = optimise_basis_v2(k, n, l)
+                print(coeffs)
                 for momentum in _angularmomentum(l)
                     ℓ = momentum[1]
                     m = momentum[2]
