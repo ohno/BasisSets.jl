@@ -88,7 +88,8 @@ function optimizebasis(molecule, bssettings)
         for (ν, l, k) in bssettings[atom.symbol]
             println("Optimizing for n=$ν, l=$l, k=$k")
             β, γ, ζ, alphas, coeffs, rms = optimise_basis_v2(k, ν, l)
-            println(coeffs)
+            coeffs =permutedims(vcat(coeffs))
+            alphas = permutedims(vcat(alphas))
             print(alphas)
             for momentum in _angularmomentum(l)
                 ℓ = momentum[1]
