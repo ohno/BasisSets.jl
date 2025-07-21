@@ -1,23 +1,5 @@
-###############################################################################
-#   STO-nG regression test (H 1s example)                                     #
-#   -----------------------------------------------------------------------   #
-#   • Uses numerical quadrature (QuadGK) for all radial integrals.            #
-#   • Shows two optimisation routes                                           #
-#       1.  Direct normal-equation solve  C*c = B  (strict least-squares)     #
-#       2.  Gradient descent with automatic differentiation (Zygote)          #
-#   • Prints the RMS radial error and the fitted coefficients.                #
-#   -----------------------------------------------------------------------   #
-#   REQUIRE:  julia> ] add QuadGK Zygote                                      #
-###############################################################################
-
 using LinearAlgebra, QuadGK, Zygote
 
-# ----------  1.  Slater-type (target) orbital --------------------------------
-"""
-    χ_STO(r; ζ=1.24, n=1)
-
-Unnormalised radial part  r^{n-1}·exp(-ζ·r).
-"""
 χ_STO(r; ζ=1.24, n=1) = r^(n-1) * exp(-ζ * r)
 
 """
@@ -108,16 +90,7 @@ end
 
 # ----------  6.  Demo: H 1s STO-3G ------------------------------------------
 ζ_H  = 1.24                       # standard value used by STO-3G
-αs   = [0.109818, 0.405771, 2.22766]   # H 1s STO-3G exponents
-
-#c  = [0.9817067, 0.949464, 0.2959065]
-
-#H     0
-#S    3   1.00
-#      0.3425250914D+01       0.1543289673D+00
-#      0.6239137298D+00       0.5353281423D+00
-#      0.1688554040D+00       0.4446345422D+00
-#****
+αs   = [3.42525, 0.6239137298,0.168855404]   # H 1s STO-3G exponents
 
 c_direct, RMS_direct = fit_direct(αs, ζ_H)
 c_AD,      RMS_AD    = fit_AD(αs, ζ_H; lr=1e-1)
