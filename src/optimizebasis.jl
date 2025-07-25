@@ -21,8 +21,14 @@ end
 function inner_fit(alphas, ζ; n, l)
     A, B, C = build_matrices(alphas, ζ; n = n, l = l)
     coeffs  = C \ B
-    coeffs ./= sqrt(dot(coeffs, C * coeffs))            # renormalise
-    rms²    = A - 2dot(coeffs, B) + dot(coeffs, C * coeffs)
+    # renormalise
+    coeffs ./= sqrt(dot(
+        coeffs, 
+        C * coeffs)
+        )            
+    rms² = A 
+        - 2dot(coeffs, B) 
+        + dot(coeffs, C * coeffs)
     return coeffs, sqrt(rms²)
 end
 
@@ -66,9 +72,15 @@ function optimise_basis_AD(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
 
     opts  = Optim.Options(x_abstol=1e-12, f_abstol=1e-14)
 
-    # autodiff=:forward lets Optim/JuMP generate ∇f via ForwardDiff
-    res = optimize(obj, lower, upper, p0, algo, opts;
-                   autodiff = :forward)
+    # autodiff=:forward lets Optim/JuMP generate 
+    # ∇f via ForwardDiff
+    res = optimize(obj, 
+                    lower, 
+                    upper, 
+                    p0, 
+                    algo, 
+                    opts;
+                    autodiff = :forward)
 
     β, γ, ζ = Optim.minimizer(res)
     αs      = [β * γ^(i - 1) for i = 1:k]
