@@ -1,9 +1,12 @@
 ```@docs
-parsebasis(molecule, basis)
+molecule
+```
+```@docs
+Molecule
 ```
 
 ```@docs
-molecule
+Atom    
 ```
 
 ```@docs
@@ -11,5 +14,5 @@ getatoms
 ```
 
 ```@docs
-Molecule
+parsebasis(molecule, basis)
 ```
