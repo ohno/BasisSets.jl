@@ -1,0 +1,6 @@
+        1 @time @testset "basis.jl" begin
+        2     mol = molecule("./data/water/water.xyz")
+        1     sto3gBasis = parsebasis(mol, "sto-3g")
+        -     
+        1     @test sto3gBasis[1].ℓ == 0
+        - end
