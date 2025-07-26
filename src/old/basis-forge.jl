@@ -1,18 +1,3 @@
-###############################################################################
-#  basis_forge.jl                                                             #
-#  ------------------------------------------------------------------------   #
-#  Build custom Gaussian‑format basis sets via automatic least‑squares fits   #
-#  to Slater targets.                                                         #
-#                                                                             #
-#  Dependencies (install once):                                               #
-#      ] add QuadGK Optim                                                     #
-###############################################################################
-
-using LinearAlgebra
-using QuadGK          # ∫₀^∞ … r² dr integrals
-using Optim           # derivative‑free optimisation
-
-# ---------- numerical settings ----------------------------------------------
 const ATOL = 1e-12    # quadrature accuracy
 
 # ---------- Slater target ----------------------------------------------------

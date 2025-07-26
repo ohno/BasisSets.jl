@@ -6,6 +6,10 @@ sto_norm(ζ; n, l) = sqrt((2ζ)^(2n + 2l + 1) / factorial(2n + 2l))
 χ_G(r, α; l) = r^l * exp(-α * r^2)
 radial_integral(f) = QuadGK.quadgk(r -> f(r) * r^2, 0.0, Inf; atol = ATOL)[1]
 
+"""
+    build_matrices(alphas, ζ; n, l)
+    Return (A, B, C) for the quadratic error
+"""
 function build_matrices(alphas, ζ; n, l)
     k      = length(alphas)
     Nsto   = sto_norm(ζ; n = n, l = l)
@@ -18,6 +22,10 @@ function build_matrices(alphas, ζ; n, l)
     return A, B, Symmetric(reshape(C, k, k))
 end
 
+"""
+    inner_fit(alphas, ζ; n, l)
+    Return coefficients and RMS error for the fit of STO to primitive Gaussians.
+"""
 function inner_fit(alphas, ζ; n, l)
     A, B, C = build_matrices(alphas, ζ; n = n, l = l)
     coeffs  = C \ B
@@ -32,6 +40,11 @@ function inner_fit(alphas, ζ; n, l)
     return coeffs, sqrt(rms²)
 end
 
+"""
+    optimise_basis(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
+    Optimise the basis set parameters for k primitive Gaussians.
+    Returns β, γ, ζ, coefficients and RMS error.
+"""
 function optimise_basis(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
     obj(p) = begin
         β, γ, ζ = p
@@ -53,6 +66,11 @@ function optimise_basis(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
     return β, γ, ζ, coeffs, rms
 end
 
+"""
+    optimise_basis_AD(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
+    Optimise the basis set parameters using automatic differentiation.
+    Returns β, γ, ζ, coefficients and RMS error.
+"""
 function optimise_basis_AD(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
     # objective — same as before
     obj(p) = begin
@@ -88,6 +106,11 @@ function optimise_basis_AD(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
     return β, γ, ζ, αs, coeffs, rms
 end
 
+"""
+    optimise_basis_v2(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
+    Optimise the basis set parameters for k primitive Gaussians.
+    Returns β, γ, ζ, alphas, coefficients and RMS error.
+"""
 function optimise_basis_v2(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
     obj(p) = begin
         β, γ, ζ = p

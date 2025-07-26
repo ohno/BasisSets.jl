@@ -1,30 +1,15 @@
-###############################################################################
-#  basis_forge.jl                                                             #
-#  ------------------------------------------------------------------------   #
-#  Build custom Gaussian‑format basis sets via automatic least‑squares fits   #
-#  to Slater targets.                                                         #
-#                                                                             #
-#  Dependencies (install once):                                               #
-#      ] add QuadGK Optim                                                     #
-###############################################################################
+const ATOL = 1e-12    
 
-using LinearAlgebra
-using QuadGK          # ∫₀^∞ … r² dr integrals
-using Optim           # derivative‑free optimisation
-using ForwardDiff
-
-# ---------- numerical settings ----------------------------------------------
-const ATOL = 1e-12    # quadrature accuracy
-
-# ---------- Slater target ----------------------------------------------------
 χ_STO(r, ζ; n, l) = r^(n - 1) * exp(-ζ * r) * r^l
 sto_norm(ζ; n, l) = sqrt((2ζ)^(2n + 2l + 1) / factorial(2n + 2l))
 
-# ---------- primitive Gaussian ----------------------------------------------
 χ_G(r, α; l) = r^l * exp(-α * r^2)
 radial_integral(f) = QuadGK.quadgk(r -> f(r) * r^2, 0.0, Inf; atol = ATOL)[1]
 
-# ---------- build A, B, C matrices ------------------------------------------
+"""
+    build_matrices(alphas, ζ; n, l)
+    Return (A, B, C) for the quadratic error
+"""
 function build_matrices(alphas, ζ; n, l)
     k      = length(alphas)
     Nsto   = sto_norm(ζ; n = n, l = l)
@@ -37,7 +22,10 @@ function build_matrices(alphas, ζ; n, l)
     return A, B, Symmetric(reshape(C, k, k))
 end
 
-# ---------- inner LSQ for coefficients + RMS --------------------------------
+"""
+    inner_fit(alphas, ζ; n, l)
+    Return coefficients and RMS error for the fit of STO to primitive Gaussians.
+"""
 function inner_fit(alphas, ζ; n, l)
     A, B, C = build_matrices(alphas, ζ; n = n, l = l)
     coeffs  = C \ B
@@ -46,7 +34,11 @@ function inner_fit(alphas, ζ; n, l)
     return coeffs, sqrt(rms²)
 end
 
-# ---------- outer optimisation of β, γ, ζ  (even‑tempered αᵢ) ---------------
+"""
+    optimise_basis(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
+    Optimise the basis set parameters for k primitive Gaussians.
+    Returns β, γ, ζ, coefficients and RMS error.
+"""
 function optimise_basis(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
     obj(p) = begin
         β, γ, ζ = p
@@ -68,6 +60,11 @@ function optimise_basis(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
     return β, γ, ζ, coeffs, rms
 end
 
+"""
+    optimise_basis_AD(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
+    Optimise the basis set parameters using automatic differentiation.
+    Returns β, γ, ζ, coefficients and RMS error.
+"""
 function optimise_basis_AD(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
     # objective — same as before
     obj(p) = begin
@@ -107,36 +104,3 @@ function print_gaussian94(io, element, n, l, β, γ, coeffs)
         print(io, " $α $c\n")
     end
 end
-
-# ---------- edit here: elements & shells to build ---------------------------
-elements = ["H", "C"]
-
-#  shell_table[element] = list of (n, l, k)
-shell_table = Dict(
-    "H" => [(1, 0, 3)],                          # 1s STO‑3G
-    "C" => [(1, 0, 3),                           # 1s
-            (2, 0, 3),                           # 2s
-            (2, 1, 3),                           # 2p (shares β,γ with 2s)
-            (0, 2, 1)]                           # 3d polarisation
-)
-
-open("my-basis-v2.gbs", "w") do io
-    for el in elements
-        for (idx, (n, l, k)) in enumerate(shell_table[el])
-            # share β, γ between 2s and 2p (SP trick) if consecutive in list
-            if el == "C" && n == 2 && l == 1 && idx > 1
-                β, γ, _, _, _ = optimise_basis_AD(k, 2, 0)
-                ζ = 1.0                          # ζ irrelevant for pure Gaussian fit
-                coeffs, _ = inner_fit([β * γ^(i - 1) for i = 1:k],
-                                       ζ; n = 2, l = 1)
-                print_gaussian94(io, el, n, l, β, γ, coeffs)
-            else
-                β, γ, ζ, coeffs, _ = optimise_basis_AD(k, n, l)
-                print_gaussian94(io, el, n, l, β, γ, coeffs)
-            end
-        end
-    end
-end
-
-println("\nBasis‑set file  →  my‑basis.gbs   (Gaussian94 / ORCA %basis ready)")
-######################################################################## EOF ###
