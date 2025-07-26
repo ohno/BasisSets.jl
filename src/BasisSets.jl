@@ -16,6 +16,7 @@ module BasisSets
 
     export 
         Atom, 
+        GaussianBasisSet,
         getatom,
         Molecule,
         molecule,
