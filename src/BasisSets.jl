@@ -26,8 +26,10 @@ module BasisSets
         parsebasis,
         parsebasis_fromfile,
         metadata,
-        optimise_basis,
-        optimise_basis_ad
+        optimize_basis,
+        optimize_basis_ad,
+        optimizebasis,
+        optimizebasis_ad
 
     const _METADATA = let 
         path = joinpath(@__DIR__, "data", "METADATA.json")  # __DIR__ == src/

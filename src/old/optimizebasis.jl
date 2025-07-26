@@ -41,11 +41,11 @@ function inner_fit(alphas, ζ; n, l)
 end
 
 """
-    optimize_basis(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
-    optimize the basis set parameters for k primitive Gaussians.
+    optimise_basis(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
+    Optimise the basis set parameters for k primitive Gaussians.
     Returns β, γ, ζ, coefficients and RMS error.
 """
-function optimize_basis(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
+function optimise_basis(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
     obj(p) = begin
         β, γ, ζ = p
         alphas  = [β * γ^(i - 1) for i = 1:k]
@@ -67,11 +67,11 @@ function optimize_basis(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
 end
 
 """
-    optimize_basis_AD(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
-    optimize the basis set parameters using automatic differentiation.
+    optimise_basis_AD(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
+    Optimise the basis set parameters using automatic differentiation.
     Returns β, γ, ζ, coefficients and RMS error.
 """
-function optimize_basis_AD(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
+function optimise_basis_AD(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
     # objective — same as before
     obj(p) = begin
         β, γ, ζ = p
@@ -85,7 +85,7 @@ function optimize_basis_AD(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
     lower = [1e-4, 1.01, 0.1]      # β>0, γ>1, ζ>0
     upper = [1e2,  10.0, 5.0]
 
-    # ---- optimizer with box wrapper ---------------------------------------
+    # ---- optimiser with box wrapper ---------------------------------------
     algo  = Fminbox(LBFGS())
 
     opts  = Optim.Options(x_abstol=1e-12, f_abstol=1e-14)
@@ -107,11 +107,11 @@ function optimize_basis_AD(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
 end
 
 """
-    optimize_basis_v2(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
-    optimize the basis set parameters for k primitive Gaussians.
+    optimise_basis_v2(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
+    Optimise the basis set parameters for k primitive Gaussians.
     Returns β, γ, ζ, alphas, coefficients and RMS error.
 """
-function optimize_basis_v2(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
+function optimise_basis_v2(k, n, l, β0 = 0.15, γ0 = 3.2, ζ0 = 1.0)
     obj(p) = begin
         β, γ, ζ = p
         alphas  = [β * γ^(i - 1) for i = 1:k]
@@ -144,7 +144,7 @@ end
 
 """
     optimizebasis(molecule, bssettings)
-    optimize the basis set parameters for a molecule.
+    Optimise the basis set parameters for a molecule.
     Returns a list of GaussianBasisSet objects.
 """
 function optimizebasis(molecule, bssettings)
@@ -156,7 +156,7 @@ function optimizebasis(molecule, bssettings)
         println("Optimizing basis for atom: ", atom.symbol)
         for (ν, l, k) in bssettings[atom.symbol]
             println("Optimizing for n=$ν, l=$l, k=$k")
-            β, γ, ζ, alphas, coeffs, rms = optimize_basis_v2(k, ν, l)
+            β, γ, ζ, alphas, coeffs, rms = optimise_basis_v2(k, ν, l)
             coeffs =permutedims(vcat(coeffs))
             alphas = permutedims(vcat(alphas))
             print(alphas)
@@ -189,7 +189,7 @@ end
 
 """    
     optimizebasis_ad(molecule, bssettings)
-    optimize the basis set parameters using automatic differentiation.
+    Optimise the basis set parameters using automatic differentiation.
     Returns a list of GaussianBasisSet objects.
 """
 function optimizebasis_ad(molecule, bssettings)
@@ -201,7 +201,7 @@ function optimizebasis_ad(molecule, bssettings)
         println("Optimizing basis for atom: ", atom.symbol)
         for (ν, l, k) in bssettings[atom.symbol]
             println("Optimizing for n=$ν, l=$l, k=$k")
-            β, γ, ζ, alphas, coeffs, rms = optimize_basis_AD(k, ν, l)
+            β, γ, ζ, alphas, coeffs, rms = optimise_basis_AD(k, ν, l)
             coeffs = permutedims(vcat(coeffs))
             alphas = permutedims(vcat(alphas))
             print(alphas)
