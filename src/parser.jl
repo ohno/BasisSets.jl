@@ -103,7 +103,6 @@ function _getbasis_fromfile(atoms, basis)
     return data
 end
 
-
 function doublefactorial(number)
     fact = foldl(Base.:*, range(number, 1, step=-2))
 
