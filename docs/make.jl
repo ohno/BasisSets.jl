@@ -13,6 +13,7 @@ makedocs(
     ),
     pages = [
         "Introduction to BasisSets" => "index.md",
+        "Documentation" => "input.md",
     ],
 )
 
