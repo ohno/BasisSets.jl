@@ -85,7 +85,7 @@ function parse_xyz(xyztext::String)::Molecule
             push!(coordinates, coordinate)
             push!(Zvalues, Zvalue)
         else
-            throw("The line \"$line\" does not match expected format.")
+            throw(ErrorException("The line \"$line\" does not match expected format."))
         end
     end
     coordinates = mapreduce(permutedims, vcat, coordinates)
