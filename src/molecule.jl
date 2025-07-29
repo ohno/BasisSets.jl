@@ -73,9 +73,9 @@ function parse_xyz(xyztext::String)::Molecule
     Zvalues = []
     for line in eachline(IOBuffer(xyztext))
         m = match(r"(?<symbol>[a-zA-Z]+)\s+(?<x>[+-]?\d+(?:\.\d+)?)\s+(?<y>[+-]?\d+(?:\.\d+)?)\s+(?<z>[+-]?\d+(?:\.\d+)?)", line)
-        if startswith(line, r"\s*#")
+        if startswith(line, r"^[\s\t]*#")
             @info "The line \"$line\" is a comment and will be skipped."
-        elseif line=="" || isempty(line)
+        elseif line=="" || isempty(line) || occursin(r"^[\s\t]*$", line)
             # skip empty lines
         elseif !isnothing(m)
             element = m[:symbol]
