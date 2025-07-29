@@ -71,13 +71,22 @@ function parse_xyz(xyztext::String)::Molecule
     elements = []
     coordinates = []
     Zvalues = []
-    for m in eachmatch(r"(?<symbol>[a-zA-Z]+)\s+(?<x>[+-]?\d+(?:\.\d+)?)\s+(?<y>[+-]?\d+(?:\.\d+)?)\s+(?<z>[+-]?\d+(?:\.\d+)?)", xyztext)
-        element = m[:symbol]
-        coordinate = parse.(Float64, [m[:x], m[:y], m[:z]])
-        Zvalue = BasisSets.getatom(element)
-        push!(elements, element)
-        push!(coordinates, coordinate)
-        push!(Zvalues, Zvalue)
+    for line in eachline(IOBuffer(xyztext))
+        m = match(r"(?<symbol>[a-zA-Z]+)\s+(?<x>[+-]?\d+(?:\.\d+)?)\s+(?<y>[+-]?\d+(?:\.\d+)?)\s+(?<z>[+-]?\d+(?:\.\d+)?)", line)
+        if startswith(line, r"\s*#")
+            @info "The line \"$line\" is a comment and will be skipped."
+        elseif line=="" || isempty(line)
+            # skip empty lines
+        elseif !isnothing(m)
+            element = m[:symbol]
+            coordinate = parse.(Float64, [m[:x], m[:y], m[:z]])
+            Zvalue = BasisSets.getatom(element)
+            push!(elements, element)
+            push!(coordinates, coordinate)
+            push!(Zvalues, Zvalue)
+        else
+            throw("The line \"$line\" does not match expected format.")
+        end
     end
     coordinates = mapreduce(permutedims, vcat, coordinates)
     return Molecule(elements, coordinates, Zvalues)
@@ -106,6 +115,7 @@ macro molecule(block)
     mol = string(block)
     mol = replace(mol, "{" => "\"")
     mol = replace(mol, "}" => "\"")
+    mol = replace(mol, "; " => "\n")
     mol = esc(Meta.parse(mol))
     :(parse_xyz($mol))
 end
