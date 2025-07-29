@@ -54,3 +54,58 @@ function molecule(xyzfile::String)::Molecule
 
     return Molecule(elements, coordinates, Zvalues)
 end
+
+"""
+This method takes a string (with cartesian coordinates of atoms in a molecule) and returns a ```Molecule```. The string should be formatted as follows
+
+```julia
+BasisSets.parse_xyz("
+    H  0.0  0.0  0.0
+    H  0.0  0.0  1.4
+")
+```
+
+Each line should contain the element symbol, x-coordinate, y-coordinate, and z-coordinate, with spaces between them.
+"""
+function parse_xyz(xyztext::String)::Molecule
+    elements = []
+    coordinates = []
+    Zvalues = []
+    for m in eachmatch(r"(?<symbol>[a-zA-Z]+)\s+(?<x>[+-]?\d+(?:\.\d+)?)\s+(?<y>[+-]?\d+(?:\.\d+)?)\s+(?<z>[+-]?\d+(?:\.\d+)?)", xyztext)
+        element = m[:symbol]
+        coordinate = parse.(Float64, [m[:x], m[:y], m[:z]])
+        Zvalue = BasisSets.getatom(element)
+        push!(elements, element)
+        push!(coordinates, coordinate)
+        push!(Zvalues, Zvalue)
+    end
+    coordinates = mapreduce(permutedims, vcat, coordinates)
+    return Molecule(elements, coordinates, Zvalues)
+end
+
+
+"""
+This macro takes a string without double quotation (with cartesian coordinates of atoms in a molecule) and returns a ```Molecule```. This interface is inspired [Fermi.jl](https://github.com/FermiQC/Fermi.jl).
+
+```julia
+@molecule {
+    H  0.0  0.0  0.0
+    H  0.0  0.0  1.4
+}
+```
+
+This macro supports string interpolation and is useful for calculating potential energy surfaces (PES).
+```julia
+@molecule {
+    H  0.0  0.0  0.0
+    H  0.0  0.0  \$(1.0 + 0.4)
+}
+```
+"""
+macro molecule(block)
+    mol = string(block)
+    mol = replace(mol, "{" => "\"")
+    mol = replace(mol, "}" => "\"")
+    mol = eval(Meta.parse(mol))
+    :(parse_xyz($mol))
+end
