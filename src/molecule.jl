@@ -106,6 +106,6 @@ macro molecule(block)
     mol = string(block)
     mol = replace(mol, "{" => "\"")
     mol = replace(mol, "}" => "\"")
-    mol = eval(Meta.parse(mol))
+    mol = esc(Meta.parse(mol))
     :(parse_xyz($mol))
 end
